@@ -1,0 +1,86 @@
+/* Container styles */
+.admin-container {
+  padding: 2rem;
+  font-family: Arial, sans-serif;
+}
+
+/* Login form styling */
+.login-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.password-input {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.submit-button {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border: none;
+  background-color: #007bff;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.submit-button:hover {
+  background-color: #0056b3;
+}
+
+/* Table styling */
+.table-wrapper {
+  overflow-x: auto;
+  margin-top: 1.5rem;
+}
+
+.profiles-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.profiles-table th,
+.profiles-table td {
+  text-align: left;
+  padding: 0.75rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.profiles-table th {
+  background-color: #f8f8f8;
+  font-weight: bold;
+}
+
+.profiles-table tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
+/* Meal times formatting */
+.meal-day {
+  margin-bottom: 0.5rem;
+}
+
+.day-label {
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+.meals-container {
+  padding-left: 1rem;
+}
+
+.meal {
+  margin-bottom: 0.25rem;
+}
+
+.meal-label {
+  font-weight: 600;
+}
