@@ -96,8 +96,10 @@ const Admin = () => {
                 <th>Interests</th>
                 <th>Meal Plan</th>
                 <th>Guest Swipe</th>
-                <th>Preferred Locations</th>
+                <th>Dining Locations</th>
                 <th>Meal Times</th>
+                <th>Personality</th>
+                <th>Preferences</th>
                 <th>Created At</th>
               </tr>
             </thead>
@@ -131,6 +133,14 @@ const Admin = () => {
                       ? renderMealTimes(profile.meal_times)
                       : ''}
                   </td>
+                  <td>
+                    <div>Type: {profile.personality_type || 'N/A'}</div>
+                    <div>Humor: {profile.humor_type || 'N/A'}</div>
+                    <div>Convo: {profile.conversation_type || 'N/A'}</div>
+                    <div>Planning: {profile.planner_type || 'N/A'}</div>
+                    <div>HP House: {profile.hp_house || 'N/A'}</div>
+                  </td>
+                  <td>{profile.match_preference || 'N/A'}</td>
                   <td>{profile.created_at}</td>
                 </tr>
               ))}
