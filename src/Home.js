@@ -38,10 +38,9 @@ export default function Home() {
   const [currentStep, setCurrentStep] = useState(1);
 
   // Basic info
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
 
   // Step 2: major, class level, interests
   const [selectedMajors, setSelectedMajors] = useState([]);
@@ -66,6 +65,71 @@ export default function Home() {
   // Final: show success message
   const [signUpSuccess, setSignUpSuccess] = useState(false);
 
+  // Add state variables for personality questions
+  const [personalityStep, setPersonalityStep] = useState(false);
+  const [personalityType, setPersonalityType] = useState('');
+  const [humorType, setHumorType] = useState('');
+  const [conversationType, setConversationType] = useState('');
+  const [plannerType, setPlannerType] = useState('');
+  const [hpHouse, setHpHouse] = useState('');
+  const [matchPreference, setMatchPreference] = useState('');
+
+  // Add state for major search
+  const [majorSearch, setMajorSearch] = useState('');
+  const [showMajorDropdown, setShowMajorDropdown] = useState(false);
+
+  // Updated majors list
+  const majors = [
+    'African and African American Studies',
+    'American Studies',
+    'Anthropology',
+    'Applied Mathematics',
+    'Art History',
+    'Biochemistry',
+    'Biological Physics',
+    'Biology',
+    'Business',
+    'Chemistry',
+    'Classical and Early Mediterranean Studies',
+    'Comparative Literature and Culture',
+    'Computer Science',
+    'Creative Writing',
+    'East Asian Studies',
+    'Economics',
+    'Education',
+    'Engineering Science',
+    'Environmental Studies',
+    'European Cultural Studies',
+    'Film, Television and Interactive Media',
+    'French and Francophone Studies',
+    'German Studies',
+    'Health: Science, Society, and Policy',
+    'Hispanic Studies',
+    'History',
+    'Independent Interdisciplinary Major',
+    'International and Global Studies',
+    'Latin American, Caribbean and Latinx Studies',
+    'Linguistics',
+    'Mathematics',
+    'Music',
+    'Near Eastern and Judaic Studies',
+    'Neuroscience',
+    'Philosophy',
+    'Physics',
+    'Politics',
+    'Psychology',
+    'Russian Studies',
+    'Sociology',
+    'Studio Art',
+    'Theater Arts',
+    'Women\'s, Gender and Sexuality Studies'
+  ];
+
+  // Filter majors based on search input
+  const filteredMajors = majors.filter(major => 
+    major.toLowerCase().includes(majorSearch.toLowerCase())
+  );
+
   // ---------------------------
   // HELPER: Toggle bubble selection
   // ---------------------------
@@ -85,16 +149,27 @@ export default function Home() {
       alert('Please use your brandeis email (@brandeis.edu).');
       return;
     }
+    if (!firstName.trim() || !lastName.trim()) {
+      alert('Please provide both first and last name.');
+      return;
+    }
     setCurrentStep(2);
   }
   function goBackToStep1() {
     setCurrentStep(1);
   }
   function goToStep3() {
-    setCurrentStep(3);
+    setPersonalityStep(false);
+    setCurrentStep(4);
   }
   function goBackToStep2() {
     setCurrentStep(2);
+  }
+
+  // Add a function to go to personality questions step
+  function goToPersonalityStep() {
+    setPersonalityStep(true);
+    setCurrentStep(3);
   }
 
   // ---------------------------
@@ -102,41 +177,15 @@ export default function Home() {
   // ---------------------------
   const [loading, setLoading] = useState(false);
   async function handleSubmit() {
-    // Basic checks
-    if (password.length < 6) {
-      alert('Password must be at least 6 characters.');
-      return;
-    }
-    if (password !== confirmPassword) {
-      alert('Passwords do not match!');
-      return;
-    }
-
     setLoading(true);
-    // 1) Supabase Auth Sign Up
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp(
-      {
-        email,
-        password,
-      }
-    );
-    if (signUpError) {
-      alert('Sign-up error: ' + signUpError.message);
-      setLoading(false);
-      return;
-    }
-    const user = signUpData.user;
-    if (!user) {
-      alert('No user returned from sign up. Check your Supabase settings.');
-      setLoading(false);
-      return;
-    }
-    console.log('Meal times state before insert:', mealTimes);
-
-    // 2) Insert into "Main" table
+    
+    // Generate a unique ID for the user
+    const userId = `brandeis_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    
+    // Insert into "Main" table without auth
     const { error: insertError } = await supabase.from('Main').insert([
       {
-        auth_id: user.id,
+        temp_id: userId,
         name: name.trim(),
         email: email.trim(),
         majors: selectedMajors,
@@ -146,15 +195,21 @@ export default function Home() {
         guest_swipe: guestSwipe,
         preferred_dining_locations: selectedLocations,
         meal_times: mealTimes,
+        personality_type: personalityType,
+        humor_type: humorType,
+        conversation_type: conversationType,
+        planner_type: plannerType,
+        hp_house: hpHouse,
+        match_preference: matchPreference
       },
     ]);
     if (insertError) {
-      alert('Error inserting into Main: ' + insertError.message);
+      alert('Error submitting form: ' + insertError.message);
       setLoading(false);
       return;
     }
 
-    // 3) Show success step
+    // Show success step
     setSignUpSuccess(true);
     setCurrentStep(4);
     setLoading(false);
@@ -382,7 +437,7 @@ export default function Home() {
             the problem
           </h2>
           <p>
-            being on campus can be lonely. schedules rarely align, and it’s
+            being on campus can be lonely. schedules rarely align, and it's
             tough finding new friends beyond your classes or clubs.
           </p>
           <p style={{ marginTop: '1rem' }}>
@@ -418,7 +473,7 @@ export default function Home() {
               random matching
             </h3>
             <p style={{ textTransform: 'lowercase' }}>
-              you’ll be paired with someone new every time, broadening your
+              you'll be paired with someone new every time, broadening your
               network.
             </p>
           </div>
@@ -506,12 +561,21 @@ export default function Home() {
             {currentStep === 1 && (
               <div style={{ animation: 'fadeIn 0.8s forwards' }}>
                 <div style={{ marginBottom: '1.2rem' }}>
-                  <label style={labelStyle}>name:</label>
+                  <label style={labelStyle}>first name:</label>
                   <input
                     type="text"
                     style={inputStyle}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                  />
+                </div>
+                <div style={{ marginBottom: '1.2rem' }}>
+                  <label style={labelStyle}>last name:</label>
+                  <input
+                    type="text"
+                    style={inputStyle}
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
                   />
                 </div>
                 <div style={{ marginBottom: '1.2rem' }}>
@@ -521,26 +585,6 @@ export default function Home() {
                     style={inputStyle}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <div style={{ marginBottom: '1.2rem' }}>
-                  <label style={labelStyle}>
-                    create password (min 6 chars):
-                  </label>
-                  <input
-                    type="password"
-                    style={inputStyle}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                <div style={{ marginBottom: '1.2rem' }}>
-                  <label style={labelStyle}>confirm password:</label>
-                  <input
-                    type="password"
-                    style={inputStyle}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
                   />
                 </div>
                 <div
@@ -562,37 +606,83 @@ export default function Home() {
               <div>
                 <div style={{ marginBottom: '1.2rem' }}>
                   <label style={labelStyle}>choose your major(s):</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="text"
+                      style={{
+                        ...inputStyle,
+                        marginBottom: '0.5rem'
+                      }}
+                      value={majorSearch}
+                      onChange={(e) => {
+                        setMajorSearch(e.target.value);
+                        setShowMajorDropdown(true);
+                      }}
+                      onFocus={() => setShowMajorDropdown(true)}
+                      placeholder="Search for majors..."
+                    />
+                    
+                    {showMajorDropdown && (
+                      <div 
+                        style={{
+                          position: 'absolute',
+                          top: '100%',
+                          left: 0,
+                          right: 0,
+                          maxHeight: '200px',
+                          overflowY: 'auto',
+                          border: '1px solid #ccc',
+                          borderRadius: '4px',
+                          boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+                          zIndex: 10,
+                          background: 'white'
+                        }}
+                      >
+                        {filteredMajors.map(major => (
+                          <div
+                            key={major}
+                            style={{
+                              padding: '0.5rem',
+                              cursor: 'pointer',
+                              background: selectedMajors.includes(major) ? '#e6f7ff' : 'white',
+                              borderBottom: '1px solid #eee'
+                            }}
+                            onClick={() => {
+                              toggleSelection(selectedMajors, setSelectedMajors, major);
+                              setMajorSearch('');
+                            }}
+                          >
+                            {major}
+                          </div>
+                        ))}
+                        {filteredMajors.length === 0 && (
+                          <div style={{ padding: '0.5rem', color: '#999' }}>
+                            No matching majors found
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Display selected majors as bubbles */}
                   <div style={bubbleContainerStyle}>
-                    {[
-                      'computer science',
-                      'biology',
-                      'economics',
-                      'history',
-                      'sociology',
-                      'music',
-                      'business',
-                      'psychology',
-                      'hssp',
-                      'english',
-                      'education',
-                    ].map((major) => (
+                    {selectedMajors.map((major) => (
                       <div
                         key={major}
                         style={{
                           ...bubbleStyle,
-                          ...(selectedMajors.includes(major)
-                            ? bubbleSelectedStyle
-                            : {}),
+                          ...bubbleSelectedStyle,
+                          display: 'flex',
+                          alignItems: 'center'
                         }}
-                        onClick={() =>
-                          toggleSelection(
-                            selectedMajors,
-                            setSelectedMajors,
-                            major
-                          )
-                        }
                       >
                         {major}
+                        <span 
+                          style={{ marginLeft: '5px', cursor: 'pointer' }}
+                          onClick={() => setSelectedMajors(selectedMajors.filter(m => m !== major))}
+                        >
+                          ×
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -674,8 +764,116 @@ export default function Home() {
             )}
 
             {/* STEP 3 */}
-            {currentStep === 3 && (
+            {currentStep === 3 && personalityStep && (
               <div>
+                <div style={{ marginBottom: '1.2rem' }}>
+                  <label style={labelStyle}>are you an introvert or an extrovert?</label>
+                  <div style={bubbleContainerStyle}>
+                    {['introvert', 'extrovert'].map((type) => (
+                      <div
+                        key={type}
+                        style={{
+                          ...bubbleStyle,
+                          ...(personalityType === type ? bubbleSelectedStyle : {}),
+                        }}
+                        onClick={() => setPersonalityType(type)}
+                      >
+                        {type}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '1.2rem' }}>
+                  <label style={labelStyle}>dark humor or wholesome laughs?</label>
+                  <div style={bubbleContainerStyle}>
+                    {['dark humor', 'wholesome laughs'].map((type) => (
+                      <div
+                        key={type}
+                        style={{
+                          ...bubbleStyle,
+                          ...(humorType === type ? bubbleSelectedStyle : {}),
+                        }}
+                        onClick={() => setHumorType(type)}
+                      >
+                        {type}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '1.2rem' }}>
+                  <label style={labelStyle}>small talk or tackling big problems?</label>
+                  <div style={bubbleContainerStyle}>
+                    {['small talk', 'tackling big problems'].map((type) => (
+                      <div
+                        key={type}
+                        style={{
+                          ...bubbleStyle,
+                          ...(conversationType === type ? bubbleSelectedStyle : {}),
+                        }}
+                        onClick={() => setConversationType(type)}
+                      >
+                        {type}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '1.2rem' }}>
+                  <label style={labelStyle}>planner or procrastinator?</label>
+                  <div style={bubbleContainerStyle}>
+                    {['planner', 'procrastinator'].map((type) => (
+                      <div
+                        key={type}
+                        style={{
+                          ...bubbleStyle,
+                          ...(plannerType === type ? bubbleSelectedStyle : {}),
+                        }}
+                        onClick={() => setPlannerType(type)}
+                      >
+                        {type}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '1.2rem' }}>
+                  <label style={labelStyle}>which harry potter house are you in?</label>
+                  <div style={bubbleContainerStyle}>
+                    {['gryffindor', 'hufflepuff', 'ravenclaw', 'slytherin', 'haven\'t watched'].map((house) => (
+                      <div
+                        key={house}
+                        style={{
+                          ...bubbleStyle,
+                          ...(hpHouse === house ? bubbleSelectedStyle : {}),
+                        }}
+                        onClick={() => setHpHouse(house)}
+                      >
+                        {house}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '1.2rem' }}>
+                  <label style={labelStyle}>want to meet someone similar or different?</label>
+                  <div style={bubbleContainerStyle}>
+                    {['similar', 'different'].map((pref) => (
+                      <div
+                        key={pref}
+                        style={{
+                          ...bubbleStyle,
+                          ...(matchPreference === pref ? bubbleSelectedStyle : {}),
+                        }}
+                        onClick={() => setMatchPreference(pref)}
+                      >
+                        {pref}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <div style={{ marginBottom: '1.2rem' }}>
                   <label style={labelStyle}>do you have a meal plan?</label>
                   <div style={bubbleContainerStyle}>
@@ -732,9 +930,6 @@ export default function Home() {
                     {[
                       'sherman',
                       'usdan',
-                      'einstein’s',
-                      'la sabrosa',
-                      'stein',
                     ].map((loc) => (
                       <div
                         key={loc}
@@ -760,8 +955,7 @@ export default function Home() {
                 <div style={{ marginBottom: '1.2rem' }}>
                   <label style={labelStyle}>select meal times</label>
                   <p style={{ fontSize: '0.85rem', marginTop: '-0.5rem' }}>
-                    hover on a day to view breakfast, lunch, dinner times. click
-                    to select.
+                    select available 30-minute time slots (6:00-7:00 PM)
                   </p>
                   <div
                     style={{
@@ -769,148 +963,69 @@ export default function Home() {
                       justifyContent: 'center',
                     }}
                   >
-                    {[
-                      'monday',
-                      'tuesday',
-                      'wednesday',
-                      'thursday',
-                      'friday',
-                      'saturday',
-                      'sunday',
-                    ].map((day) => (
+                    {['tuesday', 'wednesday'].map((day) => (
                       <div
                         key={day}
                         style={{
-                          ...bubbleStyle,
-                          ...(selectedDay === day ? bubbleSelectedStyle : {}),
+                          position: 'relative',
+                          margin: '0.5rem',
+                          padding: '0.5rem 1rem',
+                          borderRadius: '20px',
+                          backgroundColor: '#f0f0f0',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
                         }}
-                        onClick={() =>
-                          setSelectedDay(selectedDay === day ? null : day)
-                        }
                       >
-                        {day}
+                        <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>{day}</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          {['6:00-6:30 PM', '6:30-7:00 PM'].map((timeSlot) => {
+                            // Create unique key for each day-time combination
+                            const timeKey = `${day}-${timeSlot}`;
+                            const isSelected = mealTimes[day]?.dinner?.includes(timeSlot) || false;
+                            
+                            return (
+                              <div
+                                key={timeKey}
+                                style={{
+                                  ...bubbleStyle,
+                                  backgroundColor: isSelected ? '#003865' : '#f0f0f0',
+                                  color: isSelected ? 'white' : 'black',
+                                  fontSize: '0.85rem',
+                                  padding: '0.4rem 0.8rem',
+                                }}
+                                onClick={() => {
+                                  // Create a deep copy of mealTimes
+                                  const updatedMealTimes = { ...mealTimes };
+                                  
+                                  // Initialize day and meal if needed
+                                  if (!updatedMealTimes[day]) {
+                                    updatedMealTimes[day] = {};
+                                  }
+                                  if (!updatedMealTimes[day].dinner) {
+                                    updatedMealTimes[day].dinner = [];
+                                  }
+                                  
+                                  // Toggle time slot
+                                  if (updatedMealTimes[day].dinner.includes(timeSlot)) {
+                                    updatedMealTimes[day].dinner = updatedMealTimes[day].dinner.filter(
+                                      time => time !== timeSlot
+                                    );
+                                  } else {
+                                    updatedMealTimes[day].dinner.push(timeSlot);
+                                  }
+                                  
+                                  setMealTimes(updatedMealTimes);
+                                }}
+                              >
+                                {timeSlot}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     ))}
                   </div>
-                  {/* Show times for selectedDay */}
-                  {selectedDay && (
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '1rem',
-                        margin: '1rem auto',
-                        width: '100%',
-                        maxWidth: 600,
-                      }}
-                    >
-                      {['breakfast', 'lunch', 'dinner'].map((meal) => (
-                        <div
-                          key={meal}
-                          style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                          }}
-                        >
-                          <h4
-                            style={{
-                              width: '100%',
-                              fontSize: '1rem',
-                              margin: '0.5rem 0',
-                            }}
-                          >
-                            {meal}
-                          </h4>
-                          {[
-                            '7:00-7:30 am',
-                            '7:30-8:00 am',
-                            '8:00-8:30 am',
-                            '8:30-9:00 am',
-                            '9:00-9:30 am',
-                            '9:30-10:00 am',
-                            '11:00-11:30 am',
-                            '11:30-12:00 pm',
-                            '12:00-12:30 pm',
-                            '12:30-1:00 pm',
-                            '1:00-1:30 pm',
-                            '1:30-2:00 pm',
-                            '5:00-5:30 pm',
-                            '5:30-6:00 pm',
-                            '6:00-6:30 pm',
-                            '6:30-7:00 pm',
-                            '7:00-7:30 pm',
-                            '7:30-8:00 pm',
-                            '8:00-8:30 pm',
-                            '8:30-9:00 pm',
-                            '9:00-9:30 pm',
-                            '9:30-10:00 pm',
-                          ]
-                            // Filter times relevant to meal
-                            .filter((time) => {
-                              if (meal === 'breakfast') {
-                                return (
-                                  time.includes('am') &&
-                                  !time.includes('11') &&
-                                  !time.includes('12')
-                                );
-                              } else if (meal === 'lunch') {
-                                return (
-                                  time.includes('11:') ||
-                                  time.includes('12:') ||
-                                  time.includes('1:') ||
-                                  time.includes('2:')
-                                );
-                              } else if (meal === 'dinner') {
-                                return (
-                                  time.includes('5:') ||
-                                  time.includes('6:') ||
-                                  time.includes('7:') ||
-                                  time.includes('8:') ||
-                                  time.includes('9:')
-                                );
-                              }
-                              return false;
-                            })
-                            .map((time) => (
-                              <div
-                                key={time}
-                                style={{
-                                  ...bubbleStyle,
-                                  ...(mealTimes[selectedDay][meal].includes(
-                                    time
-                                  )
-                                    ? bubbleSelectedStyle
-                                    : {}),
-                                }}
-                                onClick={() => {
-                                  // Toggle time in mealTimes
-                                  const alreadySelected =
-                                    mealTimes[selectedDay][meal].includes(time);
-                                  setMealTimes({
-                                    ...mealTimes,
-                                    [selectedDay]: {
-                                      ...mealTimes[selectedDay],
-                                      [meal]: alreadySelected
-                                        ? mealTimes[selectedDay][meal].filter(
-                                            (t) => t !== time
-                                          )
-                                        : [
-                                            ...mealTimes[selectedDay][meal],
-                                            time,
-                                          ],
-                                    },
-                                  });
-                                }}
-                              >
-                                {time}
-                              </div>
-                            ))}
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
                 <div style={buttonsRowStyle}>
                   <button onClick={goBackToStep2} style={btnStyle}>
